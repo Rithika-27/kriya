@@ -1,76 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Event Details Form</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/event.css') }}">
     <script>
-        // JavaScript function to validate form and redirect to items page
-        function validateAndRedirect() {
-            var isValid = true;
-
-            // Check required fields for validation
-            var day1 = document.querySelector('input[name="day_1"]').checked;
-            var day2 = document.querySelector('input[name="day_2"]').checked;
-            var day3 = document.querySelector('input[name="day_3"]').checked;
-            var twoDays = document.querySelector('input[name="two_days"]').value.trim();
-            var rounds = document.querySelector('input[name="rounds"]').value.trim();
-            var participants = document.querySelector('input[name="participants"]').value.trim();
-            var teamMin = document.querySelector('input[name="team_min"]').value.trim();
-            var teamMax = document.querySelector('input[name="team_max"]').value.trim();
-            var hallsRequired = document.querySelector('input[name="halls_required"]').value.trim();
-            var preferredHalls = document.querySelector('input[name="preferred_halls"]').value.trim();
-            var extensionBoxes = document.querySelector('input[name="extension_boxes"]').value.trim();
-            var slotSelected = document.querySelector('input[name="slot"]:checked');
-
-            // If no days are selected, check for two-days field
-            if (!(day1 || day2 || day3 || twoDays)) {
-                alert("Please select at least one day or specify two days.");
-                isValid = false;
+        // JavaScript to toggle enable/disable for team min/max fields
+        document.querySelector('input[name="team"]').addEventListener('change', function () {
+            var teamMin = document.querySelector('input[name="team_min"]');
+            var teamMax = document.querySelector('input[name="team_max"]');
+            if (this.checked) {
+                teamMin.disabled = false;
+                teamMax.disabled = false;
+            } else {
+                teamMin.disabled = true;
+                teamMax.disabled = true;
             }
-
-            // Check for rounds, participants, and other required fields
-            if (rounds == "" || participants == "" || hallsRequired == "" || preferredHalls == "" || extensionBoxes == "") {
-                alert("Please fill in all the required fields.");
-                isValid = false;
-            }
-
-            // Check if a slot is selected
-            if (!slotSelected) {
-                alert("Please select a time slot.");
-                isValid = false;
-            }
-
-            // Check for Team selection and min/max validation
-            var isIndividual = document.querySelector('input[name="individual"]').checked;
-            var isTeam = document.querySelector('input[name="team"]').checked;
-            if (isTeam) {
-                if (teamMin == "" || teamMax == "") {
-                    alert("Please specify the team size (min and max) if Team is selected.");
-                    isValid = false;
-                }
-                if (parseInt(teamMin) > parseInt(teamMax)) {
-                    alert("Minimum team size cannot be greater than maximum team size.");
-                    isValid = false;
-                }
-            } else if (!isIndividual) {
-                alert("Please select either Individual or Team.");
-                isValid = false;
-            }
-
-            // If everything is valid, redirect to items page
-            if (isValid) {
-                window.location.href = "{{ url_for('items_page') }}";
-            }
-        }
+        });
     </script>
 </head>
+
 <body>
     <div class="container">
         <h1>Event Details Form</h1>
         <form action="{{ url_for('event_page') }}" method="POST">
             <table>
+                <!-- Day Selection -->
                 <tr>
                     <th>Day 1</th>
                     <th>Day 2</th>
@@ -83,22 +40,23 @@
                     <td><input type="checkbox" name="day_3"></td>
                     <td colspan="2"><input type="text" name="two_days" placeholder="Enter days"></td>
                 </tr>
+
+                <!-- Event Details -->
                 <tr>
-                    <th>Technical</th>
-                    <th>Non-Technical</th>
-                    <th colspan="3">No. of Rounds</th>
+                    <th colspan="5">No. of Rounds</th>
                 </tr>
                 <tr>
-                    <td><input type="checkbox" name="technical"></td>
-                    <td><input type="checkbox" name="non_technical"></td>
-                    <td colspan="3"><input type="number" name="rounds" placeholder="Enter rounds"></td>
+                    <td colspan="5"><input type="number" name="rounds" placeholder="Enter number of rounds"></td>
                 </tr>
                 <tr>
                     <th colspan="5">Expected No. of Participants</th>
                 </tr>
                 <tr>
-                    <td colspan="5"><input type="number" name="participants" placeholder="Enter number of participants"></td>
+                    <td colspan="5"><input type="number" name="participants" placeholder="Enter number of participants">
+                    </td>
                 </tr>
+
+                <!-- Team/Individual Event -->
                 <tr>
                     <th>Event Type</th>
                     <th>Individual</th>
@@ -109,10 +67,12 @@
                     <td><input type="checkbox" name="individual"></td>
                     <td colspan="2">
                         <input type="checkbox" name="team"> Team
-                        <input type="number" name="team_min" placeholder="Min" disabled> - 
+                        <input type="number" name="team_min" placeholder="Min" disabled> -
                         <input type="number" name="team_max" placeholder="Max" disabled>
                     </td>
                 </tr>
+
+                <!-- Halls and Slot Selection -->
                 <tr>
                     <th colspan="5">Number of Halls Required</th>
                 </tr>
@@ -123,8 +83,11 @@
                     <th colspan="5">Preferred Halls</th>
                 </tr>
                 <tr>
-                    <td colspan="5"><input type="text" name="preferred_halls" placeholder="Specify preferred halls"></td>
+                    <td colspan="5"><input type="text" name="preferred_halls" placeholder="Specify preferred halls">
+                    </td>
                 </tr>
+
+                <!-- Event Duration -->
                 <tr>
                     <th colspan="5">Duration of the Event</th>
                 </tr>
@@ -133,15 +96,19 @@
                     <td><label><input type="radio" name="slot" value="slot2"> Slot 2 (1:30 to 4:30)</label></td>
                     <td colspan="3"><label><input type="radio" name="slot" value="full_day"> Full Day</label></td>
                 </tr>
+
+                <!-- Additional Requirements -->
                 <tr>
-                    <th colspan="5">Additional Requirements</th>
+                    <th colspan="5">Extension Box</th>
                 </tr>
                 <tr>
-                    <td colspan="5"><label>Extension Box</label> <input type="number" name="extension_boxes" placeholder="Enter quantity"></td>
+                    <td colspan="5"><input type="number" name="extension_boxes" placeholder="Enter quantity"></td>
                 </tr>
+
+                <!-- Submit Button -->
                 <tr>
                     <td colspan="5" style="text-align: center;">
-                        <button type="button" onclick="validateAndRedirect()">Next</button>
+                        <button type="submit">Next</button>
                     </td>
                 </tr>
             </table>
@@ -149,20 +116,6 @@
         <br>
         <a href="{{ url_for('home') }}">Home</a>
     </div>
-
-    <script>
-        // Enable/Disable team min and max fields based on team checkbox
-        document.querySelector('input[name="team"]').addEventListener('change', function() {
-            var teamMin = document.querySelector('input[name="team_min"]');
-            var teamMax = document.querySelector('input[name="team_max"]');
-            if (this.checked) {
-                teamMin.disabled = false;
-                teamMax.disabled = false;
-            } else {
-                teamMin.disabled = true;
-                teamMax.disabled = true;
-            }
-        });
-    </script>
 </body>
+
 </html>

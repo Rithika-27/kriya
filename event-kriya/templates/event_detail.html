@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,11 +33,14 @@
             border-collapse: collapse;
         }
 
-        table, th, td {
+        table,
+        th,
+        td {
             border: 1px solid #ddd;
         }
 
-        th, td {
+        th,
+        td {
             padding: 10px;
             text-align: left;
         }
@@ -73,7 +77,8 @@
 
         /* Modal Style */
         .modal {
-            display: none; /* Hidden by default */
+            display: none;
+            /* Hidden by default */
             position: fixed;
             z-index: 1;
             left: 0;
@@ -81,7 +86,8 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0, 0, 0, 0.4); /* Black with transparency */
+            background-color: rgba(0, 0, 0, 0.4);
+            /* Black with transparency */
         }
 
         .modal-content {
@@ -107,19 +113,38 @@
         }
     </style>
     <script>
-        // Function to navigate to the next page and show pop-up notification
-        function goToNextPage() {
-            const form = document.getElementById('eventForm');
-            if (form.checkValidity()) {
-                // Simulate form submission or navigate to the next page
-                window.location.href = "{{ url_for('event_page') }}";
+        async function goToNextPage(event) {
+            event.preventDefault(); // Prevent form default submission
 
-                // Show the custom modal after navigation
-                setTimeout(function() {
+            const form = document.getElementById('eventForm');
+            const formData = new FormData(form);
+
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+
+            try {
+                const response = await fetch("{{ url_for('event_detail') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    // Show the custom modal
                     document.getElementById("successModal").style.display = "block";
-                }, 500); // Delay to allow page load before showing modal
-            } else {
-                alert("Please fill out all required fields.");
+                    setTimeout(() => {
+                        window.location.href = "{{ url_for('event_page') }}";
+                    }, 2000); // Redirect after showing modal
+                } else {
+                    alert("Error submitting form. Please try again.");
+                }
+            } catch (error) {
+                console.error("Error submitting form:", error);
+                alert("An error occurred. Please try again.");
             }
         }
 
@@ -127,22 +152,14 @@
         function closeModal() {
             document.getElementById("successModal").style.display = "none";
         }
-
-        // Optionally: Show modal when the page loads after navigation
-        window.onload = function() {
-            if (window.location.href.includes("event-page")) {
-                setTimeout(function() {
-                    document.getElementById("successModal").style.display = "block";
-                }, 500); // Delay to allow page load
-            }
-        }
     </script>
 </head>
+
 <body>
     <div class="container">
         <h1>Event Details Form</h1>
 
-        <form id="eventForm">
+        <form id="eventForm" method="POST" action="{{ url_for('event_detail') }}">
             <!-- Secretary Details -->
             <h3>Secretary Details:</h3>
             <table>
@@ -158,9 +175,8 @@
                 </tr>
             </table>
 
-            <!-- Convenor and Volunteer Details -->
-            <h3>Convenor and Volunteer Details:</h3>
-            <h4>Convenors</h4>
+            <!-- Convenor Details -->
+            <h3>Convenor Details:</h3>
             <table>
                 <tr>
                     <th>Name</th>
@@ -171,19 +187,6 @@
                     <td><input type="text" name="convenor_name" required></td>
                     <td><input type="text" name="convenor_roll_number" required></td>
                     <td><input type="text" name="convenor_mobile" required></td>
-                </tr>
-            </table>
-            <h4>Volunteers</h4>
-            <table>
-                <tr>
-                    <th>Name</th>
-                    <th>Roll Number</th>
-                    <th>Mobile No</th>
-                </tr>
-                <tr>
-                    <td><input type="text" name="volunteer_name" required></td>
-                    <td><input type="text" name="volunteer_roll_number" required></td>
-                    <td><input type="text" name="volunteer_mobile" required></td>
                 </tr>
             </table>
 
@@ -217,18 +220,9 @@
                 </tr>
             </table>
 
-            <p><i>(One judge must be present on the entire day of the event.)</i></p>
-
-            <button type="button" class="next-btn" onclick="goToNextPage()">Next</button>
+            <button type="submit" class="next-btn">Next</button>
         </form>
     </div>
-
-    <!-- Modal -->
-    <div id="successModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <p>Your data has been stored in the database successfully!</p>
-        </div>
-    </div>
 </body>
+
 </html>
