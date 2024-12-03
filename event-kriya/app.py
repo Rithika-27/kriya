@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session, flash
+from flask import session, flash, redirect, url_for, render_template, request, jsonify
+from bson import ObjectId
 from pymongo import MongoClient
-from bson.objectid import ObjectId
+from flask import Flask
 
 app = Flask(__name__)
 app.secret_key = 'xyz1234nbg789ty8inmcv2134'  # Secure key for sessions
@@ -48,8 +49,18 @@ def event_detail():
         }
 
         try:
-            # Insert the data into the MongoDB collection
-            result = event_collection.insert_one({"details": form_data})
+            # Generate new event ID based on the last event
+            existing_event = event_collection.find_one(sort=[("event_id", -1)])  # Find the last inserted event
+            if existing_event and "event_id" in existing_event:
+                # Increment the numeric part of the event ID
+                last_event_num = int(existing_event["event_id"][4:])
+                new_event_id = f"EVNT{last_event_num + 1:02d}"
+            else:
+                # Default to EVNT01 if no events exist
+                new_event_id = "EVNT01"
+
+            # Insert the data into the MongoDB collection with event_id
+            result = event_collection.insert_one({"details": form_data, "event_id": new_event_id})
             session["event_id"] = str(result.inserted_id)  # Store event_id in session
             flash("Event details saved successfully!")
             return redirect(url_for('event_page'))
@@ -57,8 +68,10 @@ def event_detail():
             print(f"Error saving event details: {e}")
             flash("An error occurred while saving event details.")
             return redirect(url_for('event_detail'))
-    
+
     return render_template('event_detail.html')
+
+
 @app.route('/event', methods=['GET', 'POST'])
 def event_page():
     event_id = session.get("event_id")  # Retrieve event_id from session
@@ -97,24 +110,28 @@ def event_page():
 
     return render_template('event.html')
 
-
 @app.route('/items', methods=['GET', 'POST'])
 def items_page():
     event_id = session.get("event_id")  # Retrieve event_id from session
 
     if request.method == 'POST':
+        # Retrieve item details from the form
         items_data = {
             "sno": request.form.get("sno"),
             "item_name": request.form.get("item_name"),
             "quantity": request.form.get("quantity"),
+            "price_per_unit": request.form.get("price_per_unit"),
+            "total_price": request.form.get("total_price"),
         }
 
+        # Validate required fields
         if not items_data["item_name"] or not items_data["quantity"]:
             flash("Item name and quantity are required.")
             return jsonify({"success": False, "message": "Item name and quantity are required."}), 400
 
         try:
             if event_id:
+                # Add the item details to the event in MongoDB
                 event_collection.update_one({"_id": ObjectId(event_id)}, {"$push": {"items": items_data}})
                 print(f"Updated Event ID: {event_id}")
             else:
@@ -122,13 +139,49 @@ def items_page():
                 return redirect(url_for('event_detail'))
 
             flash("Item details saved successfully!")
+            return render_template('confirm.html', event_id=event_id)
         except Exception as e:
             print(f"Error saving item data to MongoDB: {e}")
             flash("An error occurred while saving item details. Please try again.")
-
-        return jsonify({"success": True, "message": "Item details saved successfully!"}), 200
+            return redirect(url_for('items_page'))
 
     return render_template('items.html')
+
+@app.route('/confirm', methods=['POST'])
+def confirm_submission():
+    # Retrieve the event ID from the session
+    event_id_str = session.get("event_id")
+    
+    if not event_id_str:
+        flash("Error: Event ID not found in session.")
+        return redirect(url_for('event_detail'))
+
+    try:
+        # Retrieve the event document from the database using the event_id
+        event = event_collection.find_one({"event_id": event_id_str})
+        
+        if not event:
+            flash("Error: Event not found.")
+            return redirect(url_for('event_detail'))
+
+        # Extract the event_id from the document
+        event_id_from_db = event.get("event_id")
+        
+        # Ensure event_id exists in the document
+        if not event_id_from_db:
+            flash("Error: Event ID not found in the event document.")
+            return redirect(url_for('event_detail'))
+
+        # Flash success message and render the confirmation page with event details
+        flash(f"Event {event_id_from_db} retrieved successfully!")
+        return render_template('confirm.html', event_id=event_id_from_db)
+
+    except Exception as e:
+        print(f"Error retrieving event: {e}")
+        flash("An error occurred during event retrieval. Please try again.")
+        return redirect(url_for('event_page'))
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
