@@ -1,10 +1,14 @@
 /* General Body Styles */
-html, body {
+html,
+body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
     background-color: #f0f4f8;
-    height: 100%; /* Ensures the body and HTML occupy full viewport height */
+    height: 100%;
+    /* Ensure the body and html elements occupy full height */
+    overflow: hidden;
+    /* Prevent scrollbars from appearing */
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
@@ -15,7 +19,8 @@ html, body {
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 100%; /* Make container take full height */
+    height: 100%;
+    /* Ensure container takes full height */
 }
 
 /* Header Section */
@@ -31,17 +36,18 @@ html, body {
 }
 
 .page-header .kriya-logo img {
-    max-width: 120px; /* Adjust size as needed */
+    max-width: 120px;
     height: auto;
 }
-.page-header .logo img{
-    max-width: 230px; /* Adjust size as needed */
+
+.page-header .logo img {
+    max-width: 230px;
     height: auto;
 }
 
 /* Footer Section */
 .page-footer {
-    background-color: #5d5d5d; /* Distinct light gray color */
+    background-color: #5d5d5d;
     color: rgb(255, 254, 254);
     padding: 0px;
     text-align: center;
@@ -54,11 +60,14 @@ html, body {
 
 /* Main Section */
 main {
-    flex: 1; /* Occupies remaining space between header and footer */
+    flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
+    padding: 20px;
+    /* Add padding to prevent content from touching the edges */
+    box-sizing: border-box;
 }
 
 /* Search Bar Section */
@@ -85,7 +94,7 @@ main {
 }
 
 .login-button {
-    background-color:black; /* Mild blue color */
+    background-color: black;
     color: white;
     padding: 10px 20px;
     border: none;
@@ -98,17 +107,25 @@ main {
 /* Cards Section */
 .cards-container {
     display: flex;
-    justify-content: space-around; /* Spreads cards evenly */
+    justify-content: space-around;
     align-items: center;
     gap: 20px;
     width: 100%;
-    max-width: 1200px; /* Optional: Control container width */
+    max-width: 1200px;
     padding: 20px;
     box-sizing: border-box;
 }
 
+/* Card Container */
+.card-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+/* Card Styling */
 .card {
-    background-color: #ffe5ec; /* Default pastel color */
     border: 1px solid #ddd;
     border-radius: 15px;
     width: 300px;
@@ -118,18 +135,21 @@ main {
     justify-content: center;
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
     transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
+    text-decoration: none;
+    color: inherit;
 }
 
-.card:nth-child(1) {
-    background-color: #f9edc2; /* Pastel yellow for "Event" */
+/* Different Colors for Each Card */
+.event-card {
+    background-color: #f9edc2;
 }
 
-.card:nth-child(2) {
-    background-color: #d4f4dd; /* Pastel green for "Presentation" */
+.presentation-card {
+    background-color: #d4f4dd;
 }
 
-.card:nth-child(3) {
-    background-color: #e6eaff; /* Pastel blue for "Workshops" */
+.workshops-card {
+    background-color: #e6eaff;
 }
 
 .card h3 {
@@ -139,22 +159,19 @@ main {
     color: #333;
 }
 
+/* Hover Effect */
 .card:hover {
     transform: translateY(-10px);
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
-    background-color: #fdfdfd; /* Slightly lighter color on hover */
+    background-color: #fdfdfd;
 }
+
 .card-link {
-    text-decoration: none; /* Remove underline */
-    color: inherit;        /* Inherit text color */
-  }
-  
-  .card-link .card {
-    cursor: pointer;
-    transition: transform 0.2s ease-in-out;
-  }
-  
-  .card-link .card:hover {
-    transform: scale(1.05); /* Add hover effect */
-  }
-  
+    text-decoration: none;
+    /* Remove underline */
+    color: inherit;
+}
+
+.card-container a:hover .card {
+    transform: scale(1.05);
+}
