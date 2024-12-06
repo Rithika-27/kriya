@@ -85,40 +85,14 @@ def event_detail():
             }
         }
 
-        try:
-            # Generate a new event ID
-            existing_event = event_collection.find_one(sort=[("event_id", -1)])
-            if existing_event and "event_id" in existing_event:
-                last_event_num = int(existing_event["event_id"][4:])
-                new_event_id = f"EVNT{last_event_num + 1:02d}"
-            else:
-                new_event_id = "EVNT01"
+        # Save data to session or database
+        session['event_details'] = form_data
 
-            # Insert event data into MongoDB
-            event_collection.insert_one({"details": form_data, "event_id": new_event_id})
-            session["event_id"] = new_event_id  # Store the event ID in session
+        # Flash message
+        flash("Event details saved successfully!")
 
-            # Generate PDF using ReportLab
-            pdf_filename = f"event_{new_event_id}.pdf"
-            pdf_filepath = os.path.join(os.getcwd(), pdf_filename)  # Save in current directory
-
-            c = canvas.Canvas(pdf_filepath, pagesize=letter)
-            c.drawString(100, 750, f"Event ID: {new_event_id}")
-            c.drawString(100, 730, f"Secretary: {form_data['secretary']['name']} ({form_data['secretary']['roll_number']})")
-            c.drawString(100, 710, f"Convenor: {form_data['convenor']['name']} ({form_data['convenor']['roll_number']})")
-            c.drawString(100, 690, f"Faculty Advisor: {form_data['faculty_advisor']['name']} ({form_data['faculty_advisor']['designation']})")
-            c.drawString(100, 670, f"Judge: {form_data['judge']['name']} ({form_data['judge']['designation']})")
-
-            # Save the PDF file
-            c.save()
-
-            flash("Event details saved successfully!")
-            return redirect(url_for('event_page'))  # Redirect to the event_page route
-
-        except Exception as e:
-            print(f"Error saving event details: {e}")
-            flash("An error occurred while saving event details.")
-            return redirect(url_for('event_detail'))
+        # Redirect to the next page
+        return redirect(url_for('event_page'))  # Make sure you have a route for event_page
 
     return render_template('event_detail.html')
 
@@ -201,6 +175,7 @@ def view_preview():
                 response = make_response(combined_pdf.read())
                 response.headers['Content-Type'] = 'application/pdf'
                 response.headers['Content-Disposition'] = f'attachment; filename=combined_event_{event_id}.pdf'
+                os.sa
                 return response
         else:
             flash("An error occurred while combining the PDFs.")

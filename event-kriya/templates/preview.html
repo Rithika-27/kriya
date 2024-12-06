@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Page</title>
+    <script>
+        // Function to load the event data from localStorage and display it
+        function loadPreviewData() {
+            // Retrieve event details and event data from localStorage
+            const eventDetails = JSON.parse(localStorage.getItem('eventDetails'));
+            const eventData = JSON.parse(localStorage.getItem('eventData'));
+
+            // Check and display event details
+            if (eventDetails) {
+                const eventDetailsContainer = document.getElementById('eventDetails');
+                eventDetailsContainer.innerHTML = `
+                    <h2>Event Details:</h2>
+                    <pre>${JSON.stringify(eventDetails, null, 2)}</pre>
+                `;
+            } else {
+                document.getElementById('eventDetails').innerHTML = '<p>No event details found.</p>';
+            }
+
+            // Check and display event data
+            if (eventData) {
+                const eventDataContainer = document.getElementById('eventData');
+                eventDataContainer.innerHTML = `
+                    <h2>Event Data:</h2>
+                    <pre>${JSON.stringify(eventData, null, 2)}</pre>
+                `;
+            } else {
+                document.getElementById('eventData').innerHTML = '<p>No event data found.</p>';
+            }
+        }
+
+        // Call the function to load the preview data when the page loads
+        window.onload = loadPreviewData;
+
+        // Function to submit the event data to the backend
+        function submitEventData() {
+            const eventDetails = JSON.parse(localStorage.getItem('eventDetails'));
+            const eventData = JSON.parse(localStorage.getItem('eventData'));
+
+            if (eventDetails && eventData) {
+                // Merge eventDetails and eventData into a single object
+                const allEventData = { eventDetails, eventData };
+
+                // Simulate submitting the data
+                fetch('/submit_event', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(allEventData),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Navigate to confirmation page on success
+                        window.location.href = './confirm';
+                    })
+                    .catch(error => {
+                        console.error('Error submitting event data:', error);
+                        alert('Failed to submit event data.');
+                    });
+            } else {
+                alert('No event data to submit.');
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Event Preview</h1>
+
+        <!-- Event Details Section -->
+        <div id="eventDetails">
+            <h2>Event Details:</h2>
+            <!-- Populated dynamically -->
+        </div>
+
+        <!-- Event Data Section -->
+        <div id="eventData">
+            <h2>Event Data:</h2>
+            <!-- Populated dynamically -->
+        </div>
+
+        <!-- Submit Button -->
+        <button onclick="submitEventData()">Submit</button>
+    </div>
+</body>
+
+</html>

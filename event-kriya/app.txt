@@ -274,3 +274,4 @@ def generate_pdf():
 
 if __name__ == '__main__':
     app.run(debug=True)
+i want this event.html to do same work as eevnt_details.html like collecting ino fo in its feiladn and store it in localstorage

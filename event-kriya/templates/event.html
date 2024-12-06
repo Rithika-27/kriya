@@ -4,118 +4,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Details Form</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/event.css') }}">
-    <script>
-        // JavaScript to toggle enable/disable for team min/max fields
-        document.querySelector('input[name="team"]').addEventListener('change', function () {
-            var teamMin = document.querySelector('input[name="team_min"]');
-            var teamMax = document.querySelector('input[name="team_max"]');
-            if (this.checked) {
-                teamMin.disabled = false;
-                teamMax.disabled = false;
-            } else {
-                teamMin.disabled = true;
-                teamMax.disabled = true;
-            }
-        });
-    </script>
+    <title>Event Details Page</title>
+    <style>
+        /* Add styles similar to previous */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            width: 70%;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .next-btn {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: block;
+            width: 100%;
+        }
+
+        .next-btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .circle {
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            background-color: #3498db;
+            display: inline-block;
+            margin: 5px;
+        }
+
+        .form-table td,
+        .form-table th {
+            text-align: center;
+        }
+    </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>Event Details Form</h1>
-        <form action="{{ url_for('event_page') }}" method="POST">
-            <table>
-                <!-- Day Selection -->
+        <h1>Event Details</h1>
+        <form id="eventDetailsForm">
+            <table class="form-table">
+                <!-- Same table structure as before -->
                 <tr>
-                    <th>Day 1</th>
-                    <th>Day 2</th>
-                    <th>Day 3</th>
-                    <th colspan="2">2 Days (Specify)</th>
-                </tr>
-                <tr>
-                    <td><input type="checkbox" name="day_1"></td>
-                    <td><input type="checkbox" name="day_2"></td>
-                    <td><input type="checkbox" name="day_3"></td>
-                    <td colspan="2"><input type="text" name="two_days" placeholder="Enter days"></td>
-                </tr>
-
-                <!-- Event Details -->
-                <tr>
-                    <th colspan="5">No. of Rounds</th>
-                </tr>
-                <tr>
-                    <td colspan="5"><input type="number" name="rounds" placeholder="Enter number of rounds"></td>
-                </tr>
-                <tr>
-                    <th colspan="5">Expected No. of Participants</th>
-                </tr>
-                <tr>
-                    <td colspan="5"><input type="number" name="participants" placeholder="Enter number of participants">
+                    <th>DAY 1</th>
+                    <td>
+                        <div class="circle"></div>
+                    </td>
+                    <th>DAY 2</th>
+                    <td>
+                        <div class="circle"></div>
+                    </td>
+                    <th>DAY 3</th>
+                    <td>
+                        <div class="circle"></div>
+                    </td>
+                    <th>2 DAYS</th>
+                    <td>
+                        <div class="circle"></div>
                     </td>
                 </tr>
-
-                <!-- Team/Individual Event -->
                 <tr>
-                    <th>Event Type</th>
-                    <th>Individual</th>
-                    <th colspan="2">Team (Min-Max)</th>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td><input type="checkbox" name="individual"></td>
-                    <td colspan="2">
-                        <input type="checkbox" name="team"> Team
-                        <input type="number" name="team_min" placeholder="Min" disabled> -
-                        <input type="number" name="team_max" placeholder="Max" disabled>
+                    <th>TECHNICAL</th>
+                    <td>
+                        <div class="circle"></div>
+                    </td>
+                    <th>NON-TECHNICAL</th>
+                    <td>
+                        <div class="circle"></div>
                     </td>
                 </tr>
-
-                <!-- Halls and Slot Selection -->
                 <tr>
-                    <th colspan="5">Number of Halls Required</th>
+                    <th>NO. OF ROUNDS</th>
+                    <td><input type="number" name="rounds" required></td>
+                    <th>EXPECTED NO. OF PARTICIPANTS</th>
+                    <td><input type="number" name="participants" required></td>
                 </tr>
                 <tr>
-                    <td colspan="5"><input type="text" name="halls_required" placeholder="Specify halls required"></td>
-                </tr>
-                <tr>
-                    <th colspan="5">Preferred Halls</th>
-                </tr>
-                <tr>
-                    <td colspan="5"><input type="text" name="preferred_halls" placeholder="Specify preferred halls">
+                    <th>EVENT TYPE</th>
+                    <td><input type="text" name="event_type" required></td>
+                    <th>INDIVIDUAL</th>
+                    <td><input type="number" name="individual_min" required> - <input type="number"
+                            name="individual_max" required></td>
+                    <th>TEAM</th>
+                    <td><input type="number" name="team_min" required> - <input type="number" name="team_max" required>
                     </td>
                 </tr>
-
-                <!-- Event Duration -->
                 <tr>
-                    <th colspan="5">Duration of the Event</th>
+                    <th>NUMBER OF HALLS REQUIRED</th>
+                    <td><input type="number" name="halls_required" required></td>
+                    <th>HALLS PREFERRED</th>
+                    <td><input type="text" name="halls_preferred" required></td>
                 </tr>
                 <tr>
-                    <td><label><input type="radio" name="slot" value="slot1"> Slot 1 (9:30 to 12:30)</label></td>
-                    <td><label><input type="radio" name="slot" value="slot2"> Slot 2 (1:30 to 4:30)</label></td>
-                    <td colspan="3"><label><input type="radio" name="slot" value="full_day"> Full Day</label></td>
-                </tr>
-
-                <!-- Additional Requirements -->
-                <tr>
-                    <th colspan="5">Extension Box</th>
+                    <th>DURATION OF THE EVENT IN HOURS</th>
+                    <td><input type="number" name="event_duration" required></td>
                 </tr>
                 <tr>
-                    <td colspan="5"><input type="number" name="extension_boxes" placeholder="Enter quantity"></td>
+                    <th>START TO END TIME</th>
+                    <td><input type="text" name="slot_1_start" placeholder="9:30 to 12:30" required></td>
+                    <th>SLOT 1</th>
+                    <td><input type="text" name="slot_1_time" placeholder="9:30 to 12:30" required></td>
+                    <th>SLOT 2</th>
+                    <td><input type="text" name="slot_2_time" placeholder="1:30 to 4:30" required></td>
                 </tr>
-
-                <!-- Submit Button -->
                 <tr>
-                    <td colspan="5" style="text-align: center;">
-                        <button type="submit">Next</button>
-                    </td>
+                    <th>NUMBER REQUIRED</th>
+                    <td><input type="number" name="number_required" required></td>
+                </tr>
+                <tr>
+                    <th>EXTENSION BOX</th>
+                    <td><input type="text" name="extension_box" placeholder="Justify the reason" required></td>
                 </tr>
             </table>
+
+            <button type="submit" class="next-btn">Submit</button>
         </form>
-        <br>
-        <a href="{{ url_for('home') }}">Home</a>
     </div>
+
+    <script>
+        // Function to handle form submission
+        document.getElementById('eventDetailsForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Create an object to store the form data
+            const formData = {
+                rounds: document.querySelector('[name="rounds"]').value,
+                participants: document.querySelector('[name="participants"]').value,
+                event_type: document.querySelector('[name="event_type"]').value,
+                individual_min: document.querySelector('[name="individual_min"]').value,
+                individual_max: document.querySelector('[name="individual_max"]').value,
+                team_min: document.querySelector('[name="team_min"]').value,
+                team_max: document.querySelector('[name="team_max"]').value,
+                halls_required: document.querySelector('[name="halls_required"]').value,
+                halls_preferred: document.querySelector('[name="halls_preferred"]').value,
+                event_duration: document.querySelector('[name="event_duration"]').value,
+                slot_1_start: document.querySelector('[name="slot_1_start"]').value,
+                slot_1_time: document.querySelector('[name="slot_1_time"]').value,
+                slot_2_time: document.querySelector('[name="slot_2_time"]').value,
+                number_required: document.querySelector('[name="number_required"]').value,
+                extension_box: document.querySelector('[name="extension_box"]').value
+            };
+
+            // Save the form data to localStorage
+            localStorage.setItem('eventData', JSON.stringify(formData));
+
+            // Redirect to preview.html page
+            window.location.href = './preview';
+        });
+    </script>
 </body>
 
 </html>
