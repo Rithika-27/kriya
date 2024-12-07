@@ -4,9 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Details Page</title>
+    <title>Event Details Form</title>
     <style>
-        /* Add styles similar to previous */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -46,15 +45,14 @@
         }
 
         input[type="text"],
-        input[type="number"] {
-            width: 100%;
-            padding: 8px;
+        input[type="number"],
+        input[type="checkbox"],
+        input[type="radio"] {
             margin: 5px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            padding: 8px;
         }
 
-        .next-btn {
+        button {
             background-color: #3498db;
             color: white;
             padding: 10px 20px;
@@ -63,144 +61,152 @@
             cursor: pointer;
             border-radius: 5px;
             margin-top: 20px;
-            display: block;
-            width: 100%;
         }
 
-        .next-btn:disabled {
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        button:disabled {
             background-color: #bdc3c7;
             cursor: not-allowed;
         }
-
-        .circle {
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            background-color: #3498db;
-            display: inline-block;
-            margin: 5px;
-        }
-
-        .form-table td,
-        .form-table th {
-            text-align: center;
-        }
     </style>
+    <script>
+        // Function to save form data to localStorage
+        function saveToLocalStorage() {
+            const formData = {};
+            const inputs = document.querySelectorAll('input[name], textarea[name]');
+
+            inputs.forEach(input => {
+                formData[input.name] = input.type === 'checkbox' || input.type === 'radio' ? input.checked : input.value;
+            });
+
+            localStorage.setItem('eventData', JSON.stringify(formData));
+            alert("Form data saved successfully!");
+        }
+
+        // Function to load form data from localStorage
+        // function loadFromLocalStorage() {
+        //     const storedData = JSON.parse(localStorage.getItem('eventData'));
+        //     if (storedData) {
+        //         for (const key in storedData) {
+        //             const input = document.querySelector(`[name="${key}"]`);
+        //             if (input) {
+        //                 if (input.type === 'checkbox' || input.type === 'radio') {
+        //                     input.checked = storedData[key];
+        //                 } else {
+        //                     input.value = storedData[key];
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+
+        // Function to toggle the enable/disable of the Team fields
+        function toggleTeamFields() {
+            const teamCheckbox = document.querySelector('input[name="team"]');
+            const teamMin = document.querySelector('input[name="team_min"]');
+            const teamMax = document.querySelector('input[name="team_max"]');
+            teamMin.disabled = !teamCheckbox.checked;
+            teamMax.disabled = !teamCheckbox.checked;
+        }
+
+        // Ensure the form is loaded properly and handles submit correctly
+        window.addEventListener('load', () => {
+            loadFromLocalStorage();
+
+            document.querySelector('form').addEventListener('submit', (e) => {
+                e.preventDefault();  // Prevent default form submission
+                saveToLocalStorage();  // Save form data to localStorage
+                window.location.href = './items';  // Redirect to items page after form submission
+            });
+
+            // Event listener for toggling the team fields
+            document.querySelector('input[name="team"]').addEventListener('change', toggleTeamFields);
+        });
+    </script>
 </head>
 
 <body>
     <div class="container">
-        <h1>Event Details</h1>
-        <form id="eventDetailsForm">
-            <table class="form-table">
-                <!-- Same table structure as before -->
+        <h1>Event Details Form</h1>
+        <form method="POST">
+            <table>
                 <tr>
-                    <th>DAY 1</th>
-                    <td>
-                        <div class="circle"></div>
-                    </td>
-                    <th>DAY 2</th>
-                    <td>
-                        <div class="circle"></div>
-                    </td>
-                    <th>DAY 3</th>
-                    <td>
-                        <div class="circle"></div>
-                    </td>
-                    <th>2 DAYS</th>
-                    <td>
-                        <div class="circle"></div>
-                    </td>
+                    <th>Day 1</th>
+                    <th>Day 2</th>
+                    <th>Day 3</th>
+                    <th colspan="2">2 Days (Specify)</th>
                 </tr>
                 <tr>
-                    <th>TECHNICAL</th>
-                    <td>
-                        <div class="circle"></div>
-                    </td>
-                    <th>NON-TECHNICAL</th>
-                    <td>
-                        <div class="circle"></div>
+                    <td><input type="checkbox" name="day_1"></td>
+                    <td><input type="checkbox" name="day_2"></td>
+                    <td><input type="checkbox" name="day_3"></td>
+                    <td colspan="2"><input type="text" name="two_days" placeholder="Enter days"></td>
+                </tr>
+                <tr>
+                    <th colspan="5">No. of Rounds</th>
+                </tr>
+                <tr>
+                    <td colspan="5"><input type="number" name="rounds" placeholder="Enter number of rounds"></td>
+                </tr>
+                <tr>
+                    <th colspan="5">Expected No. of Participants</th>
+                </tr>
+                <tr>
+                    <td colspan="5"><input type="number" name="participants" placeholder="Enter number of participants">
                     </td>
                 </tr>
                 <tr>
-                    <th>NO. OF ROUNDS</th>
-                    <td><input type="number" name="rounds" required></td>
-                    <th>EXPECTED NO. OF PARTICIPANTS</th>
-                    <td><input type="number" name="participants" required></td>
+                    <th>Event Type</th>
+                    <th>Individual</th>
+                    <th colspan="2">Team (Min-Max)</th>
                 </tr>
                 <tr>
-                    <th>EVENT TYPE</th>
-                    <td><input type="text" name="event_type" required></td>
-                    <th>INDIVIDUAL</th>
-                    <td><input type="number" name="individual_min" required> - <input type="number"
-                            name="individual_max" required></td>
-                    <th>TEAM</th>
-                    <td><input type="number" name="team_min" required> - <input type="number" name="team_max" required>
+                    <td></td>
+                    <td><input type="checkbox" name="individual"></td>
+                    <td colspan="2">
+                        <input type="checkbox" name="team"> Team
+                        <input type="number" name="team_min" placeholder="Min" disabled>
+                        <input type="number" name="team_max" placeholder="Max" disabled>
                     </td>
                 </tr>
                 <tr>
-                    <th>NUMBER OF HALLS REQUIRED</th>
-                    <td><input type="number" name="halls_required" required></td>
-                    <th>HALLS PREFERRED</th>
-                    <td><input type="text" name="halls_preferred" required></td>
+                    <th colspan="5">Number of Halls Required</th>
                 </tr>
                 <tr>
-                    <th>DURATION OF THE EVENT IN HOURS</th>
-                    <td><input type="number" name="event_duration" required></td>
+                    <td colspan="5"><input type="text" name="halls_required" placeholder="Specify halls required"></td>
                 </tr>
                 <tr>
-                    <th>START TO END TIME</th>
-                    <td><input type="text" name="slot_1_start" placeholder="9:30 to 12:30" required></td>
-                    <th>SLOT 1</th>
-                    <td><input type="text" name="slot_1_time" placeholder="9:30 to 12:30" required></td>
-                    <th>SLOT 2</th>
-                    <td><input type="text" name="slot_2_time" placeholder="1:30 to 4:30" required></td>
+                    <th colspan="5">Preferred Halls</th>
                 </tr>
                 <tr>
-                    <th>NUMBER REQUIRED</th>
-                    <td><input type="number" name="number_required" required></td>
+                    <td colspan="5"><input type="text" name="preferred_halls" placeholder="Specify preferred halls">
+                    </td>
                 </tr>
                 <tr>
-                    <th>EXTENSION BOX</th>
-                    <td><input type="text" name="extension_box" placeholder="Justify the reason" required></td>
+                    <th colspan="5">Duration of the Event</th>
+                </tr>
+                <tr>
+                    <td><input type="radio" name="slot" value="slot1"> Slot 1 (9:30 to 12:30)</td>
+                    <td><input type="radio" name="slot" value="slot2"> Slot 2 (1:30 to 4:30)</td>
+                    <td colspan="3"><input type="radio" name="slot" value="full_day"> Full Day</td>
+                </tr>
+                <tr>
+                    <th colspan="5">Extension Box</th>
+                </tr>
+                <tr>
+                    <td colspan="5"><input type="number" name="extension_boxes" placeholder="Enter quantity"></td>
+                </tr>
+                <tr>
+                    <td colspan="5" style="text-align: center;">
+                        <button type="submit">Next</button>
+                    </td>
                 </tr>
             </table>
-
-            <button type="submit" class="next-btn">Submit</button>
         </form>
     </div>
-
-    <script>
-        // Function to handle form submission
-        document.getElementById('eventDetailsForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            // Create an object to store the form data
-            const formData = {
-                rounds: document.querySelector('[name="rounds"]').value,
-                participants: document.querySelector('[name="participants"]').value,
-                event_type: document.querySelector('[name="event_type"]').value,
-                individual_min: document.querySelector('[name="individual_min"]').value,
-                individual_max: document.querySelector('[name="individual_max"]').value,
-                team_min: document.querySelector('[name="team_min"]').value,
-                team_max: document.querySelector('[name="team_max"]').value,
-                halls_required: document.querySelector('[name="halls_required"]').value,
-                halls_preferred: document.querySelector('[name="halls_preferred"]').value,
-                event_duration: document.querySelector('[name="event_duration"]').value,
-                slot_1_start: document.querySelector('[name="slot_1_start"]').value,
-                slot_1_time: document.querySelector('[name="slot_1_time"]').value,
-                slot_2_time: document.querySelector('[name="slot_2_time"]').value,
-                number_required: document.querySelector('[name="number_required"]').value,
-                extension_box: document.querySelector('[name="extension_box"]').value
-            };
-
-            // Save the form data to localStorage
-            localStorage.setItem('eventData', JSON.stringify(formData));
-
-            // Redirect to preview.html page
-            window.location.href = './preview';
-        });
-    </script>
 </body>
 
 </html>

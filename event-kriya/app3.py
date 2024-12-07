@@ -127,29 +127,68 @@ def event_page():
         session['event_data'] = event_data
         
         # Redirect to the preview page
-        return redirect(url_for('preview'))
+        return redirect(url_for('items'))
     
     # Render the event form template if the request is GET
     return render_template('event.html')
+@app.route('/items', methods=['GET', 'POST'])
+def items_page():
+    if request.method == 'POST':
+        # Collect items data from the form
+        items = []
+        rows = request.form.getlist('item_name[]')
+        
+        for i in range(len(rows)):
+            item = {
+                'item_name': request.form.getlist('item_name[]')[i],
+                'quantity': request.form.getlist('quantity[]')[i],
+                'price_per_unit': request.form.getlist('price_per_unit[]')[i],
+                'total_price': request.form.getlist('total_price[]')[i]
+            }
+            items.append(item)
+        
+        # Store items data in session
+        session['items_data'] = items
+
+        # Redirect to a preview or confirmation page
+        return redirect(url_for('preview_items'))
+
+    # Render the items form template if the request is GET
+    return render_template('items.html')
+
 
 @app.route('/preview', methods=['GET'])
 def preview():
-    # Retrieve event details and data from the session
+    # Retrieve event details, event data, and items from the session
     event_details = session.get('event_details', {})
     event_data = session.get('event_data', {})
-    return render_template('preview.html', event_details=event_details, event_data=event_data)
+    items = session.get('items', [])  # Default to an empty list if no items are stored
+    
+    # Pass all data to the template
+    return render_template('preview.html', 
+                           event_details=event_details, 
+                           event_data=event_data, 
+                           items=items)
 
 @app.route('/submit_event', methods=['POST'])
 def submit_event():
     try:
+        # Retrieve JSON payload
         all_event_data = request.json
         event_details = all_event_data.get('eventDetails')
         event_data = all_event_data.get('eventData')
+        items = all_event_data.get('items')  
+        # Default to an empty list if not provided
+        print("Received items:", items)
 
-        # Log the received data to ensure it's correct
+        if not items:
+            return jsonify({"status": "error", "message": "No items provided."}), 400
+
+
+        # Log received data for debugging
         print("Received event details:", event_details)
         print("Received event data:", event_data)
-
+        print("Received items:", items)
 
         # Generate a new event ID
         existing_event = event_collection.find_one(sort=[("event_id", -1)])
@@ -163,7 +202,8 @@ def submit_event():
         event_entry = {
             "event_id": new_event_id,
             "details": event_details,
-            "event": event_data
+            "event": event_data,
+            "items": items  # Include items in the event entry
         }
         event_collection.insert_one(event_entry)
 
@@ -173,60 +213,183 @@ def submit_event():
         return jsonify({"status": "success", "message": "Event submitted successfully!", "event_id": new_event_id}), 200
 
     except Exception as e:
+        # Handle errors gracefully
+        print("Error:", str(e))
         return jsonify({"status": "error", "message": str(e)}), 500
-
 
 @app.route('/confirm')
 def confirm_page():
     return render_template('confirm.html')
 
 
+# Assume `event_collection` is a valid MongoDB collection instance
+
 @app.route('/view-preview', methods=['GET'])
 def view_preview():
     event_id = session.get("event_id")  # Retrieve event_id from session
     if event_id:
+        event_data = event_collection.find_one({"event_id": event_id})
         try:
-            # Fetch event data from MongoDB using event_id
-            event_data = event_collection.find_one({"event_id": event_id})
             if event_data:
                 # Generate PDFs based on the event data
-                form_data = event_data["details"]
-                pdf_filename_1 = f"event_{event_id}.pdf"
+                form_data = event_data.get("details", {})
+
+                pdf_filename_1 = f"event_preview_{event_id}.pdf"
                 pdf_filepath_1 = os.path.join(os.getcwd(), pdf_filename_1)
 
-                # Generate PDF for event details
+                # Initialize PDF
                 c = canvas.Canvas(pdf_filepath_1, pagesize=letter)
-                c.drawString(100, 750, f"Event ID: {event_id}")
-                c.drawString(100, 730, f"Secretary: {form_data.get('secretary_name', 'N/A')} ({form_data.get('secretary_roll_number', 'N/A')})")
-                c.drawString(100, 710, f"Mobile: {form_data.get('secretary_mobile', 'N/A')}")
+
+                # Draw Secretary Details Section
+                width, height = letter
+                margin = 50
+                y = height - 50
+                y = draw_fixed_table(
+                    c,
+                    x=margin,
+                    y=y,
+                    title="SECRETARY DETAILS:",
+                    headers=["NAME", "ROLL NUMBER", "MOBILE NO"],
+                    rows=[
+                        [
+                            form_data.get("secretary_name", "N/A"),
+                            form_data.get("secretary_roll_number", "N/A"),
+                            form_data.get("secretary_mobile", "N/A"),
+                        ]
+                    ],
+                    num_rows=2,
+                )
+
+                # Draw Convenor and Volunteer Details Section
+                y = draw_combined_section(
+                    c,
+                    x=margin,
+                    y=y - 20,
+                    title="CONVENOR AND VOLUNTEER DETAILS:",
+                    headers=["NAME", "ROLL NUMBER", "MOBILE NO"],
+                    convenors=[
+                        {
+                            "name": form_data.get("convenor_name", "N/A"),
+                            "roll_number": form_data.get("convenor_roll_number", "N/A"),
+                            "mobile": form_data.get("convenor_mobile", "N/A"),
+                        }
+                    ],
+                    volunteers=form_data.get("volunteers", []),
+                )
+
+                # Draw Faculty Advisor Details Section
+                y = draw_fixed_table(
+                    c,
+                    x=margin,
+                    y=y - 20,
+                    title="FACULTY ADVISOR DETAILS:",
+                    headers=["NAME", "DESIGNATION", "CONTACT DETAILS"],
+                    rows=[
+                        [
+                            form_data.get("advisor_name", "N/A"),
+                            form_data.get("advisor_department", "N/A"),
+                            form_data.get("advisor_contact", "N/A"),
+                        ]
+                    ],
+                    num_rows=1,
+                )
+
+                # Draw Judge Details Section
+                draw_fixed_table(
+                    c,
+                    x=margin,
+                    y=y - 60,
+                    title="JUDGE DETAILS:",
+                    headers=["NAME", "DESIGNATION", "CONTACT DETAILS"],
+                    rows=[
+                        [
+                            form_data.get("judge_name", "N/A"),
+                            form_data.get("judge_designation", "N/A"),
+                            form_data.get("judge_contact", "N/A"),
+                        ]
+                    ],
+                    num_rows=1,
+                )
+
+                # Save the first PDF
                 c.save()
 
                 pdf_filename_2 = f"event_{event_id}_details.pdf"
                 pdf_filepath_2 = os.path.join(os.getcwd(), pdf_filename_2)
 
                 # Generate PDF for event-specific details
-                event_details = event_data["event"]
-                c = canvas.Canvas(pdf_filepath_2, pagesize=letter)
-                c.drawString(100, 750, f"Event ID: {event_id}")
-                c.drawString(100, 730, f"Rounds: {event_details.get('rounds', 'N/A')}")
-                c.drawString(100, 710, f"Description: {event_details.get('event_description', 'N/A')}")
-                c.drawString(100, 690, f"Location: {event_details.get('event_location', 'N/A')}")
-                c.drawString(100, 670, f"Day 1: {'Yes' if event_details.get('day_1') else 'No'}")
-                c.drawString(100, 650, f"Day 2: {'Yes' if event_details.get('day_2') else 'No'}")
-                c.drawString(100, 630, f"Day 3: {'Yes' if event_details.get('day_3') else 'No'}")
-                c.save()
+                event_details = event_data.get("event", {})
+                pdf = canvas.Canvas(pdf_filepath_2, pagesize=letter)
+                width, height = letter
 
-                # Combine the two PDFs into one
+                # Set margin for text placement
+                margin = 60
+
+                # Draw header line
+                pdf.line(margin - 20, height - 40, width - margin, height - 40)
+
+                # Checkboxes for days
+                pdf.drawString(margin, height - 60, "Day 1:")
+                pdf.rect(margin + 40, height - 61, 10, 10, fill=1 if "day1" in event_details.get("day", []) else 0)
+
+                pdf.drawString(margin + 80, height - 60, "Day 2:")
+                pdf.rect(margin + 130, height - 61, 10, 10, fill=1 if "day2" in event_details.get("day", []) else 0)
+
+                pdf.drawString(margin + 170, height - 60, "Both Days:")
+                pdf.rect(margin + 250, height - 61, 10, 10, fill=1 if "bothDays" in event_details.get("day", []) else 0)
+
+                # Line after checkboxes
+                pdf.line(margin - 20, height - 80, width - margin, height - 80)
+
+                # Content fields
+                pdf.drawString(margin, height - 110, f"Expected No. of Participants: {event_data.get('participants', 'N/A')}")
+                pdf.drawString(margin, height - 140, f"Team Size: Min: {event_details.get('teamSizeMin', 'N/A')}, Max: {event_details.get('teamSizeMax', 'N/A')}")
+
+                pdf.line(margin - 20, height - 150, width - margin, height - 150)
+
+                pdf.drawString(margin, height - 170, f"Number of Halls/Labs Required: {event_details.get('halls_required', 'N/A')}")
+                pdf.drawString(margin, height - 200, "Reason for Multiple Halls:")
+                pdf.drawString(margin + 20, height - 220, event_details.get("hallReason", "N/A"))
+
+                pdf.line(margin - 20, height - 230, width - margin, height - 230)
+
+                pdf.drawString(margin, height - 250, "Halls/Labs Preferred:")
+                pdf.drawString(margin + 20, height - 270, event_details.get("halls_preferred", "N/A"))
+
+                pdf.line(margin - 20, height - 280, width - margin, height - 280)
+
+                # Duration radio buttons
+                pdf.drawString(margin, height - 300, "Duration of the Event in Hours:")
+                pdf.drawString(margin + 20, height - 320, "Slot 1: 9:30 to 12:30")
+                pdf.circle(margin + 160, height - 315, 5, fill=1 if event_details.get("duration") == "slot1" else 0)
+                pdf.drawString(margin + 20, height - 340, "Slot 2: 1:30 to 4:30")
+                pdf.circle(margin + 160, height - 335, 5, fill=1 if event_details.get("duration") == "slot2" else 0)
+                pdf.drawString(margin + 20, height - 360, "Full Day")
+                pdf.circle(margin + 160, height - 355, 5, fill=1 if event_details.get("duration") == "fullDay" else 0)
+
+                pdf.line(margin - 20, height - 370, width - margin, height - 370)
+
+                pdf.drawString(margin, height - 390, f"Number Required: {event_details.get('numberRequired', 'N/A')}")
+                pdf.drawString(margin, height - 420, "Reason for Number:")
+                pdf.drawString(margin + 20, height - 440, event_details.get("numberReason", "N/A"))
+
+                pdf.line(margin - 20, height - 450, width - margin, height - 450)
+
+                pdf.drawString(margin, height - 470, f"Extension Box: {event_details.get('extensionBox', 'N/A')}")
+
+                pdf.line(margin - 20, height - 480, width - margin, height - 480)
+
+                pdf.save()
+
+                # Combine PDFs
                 combined_pdf = combine_pdfs(pdf_filepath_1, pdf_filepath_2)
 
                 if combined_pdf:
                     combined_pdf_filename = f"event_{event_id}_combined.pdf"
                     combined_pdf_path = os.path.join(os.getcwd(), combined_pdf_filename)
 
-                    # Move the combined PDF to the desired location
                     os.rename(combined_pdf, combined_pdf_path)
 
-                    # Serve the combined PDF for download
                     with open(combined_pdf_path, "rb") as f:
                         pdf_content = f.read()
 
@@ -242,7 +405,81 @@ def view_preview():
 
     return redirect(url_for('event_page'))
 
+def draw_fixed_table(pdf, x, y, title, headers, rows, num_rows):
+    """
+    Draws a section with a title and a table below it.
+    """
+    # Draw Title
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(x, y, title)
+    y -= 25  # Add some space below the title
+
+    # Draw Headers
+    pdf.setFont("Helvetica-Bold", 10)
+    cell_widths = [150, 100, 100]
+    cell_height = 20  # Adjust row height to avoid overlap
+
+    # Header row
+    for i, header in enumerate(headers):
+        pdf.rect(x + sum(cell_widths[:i]), y - cell_height, cell_widths[i], cell_height)
+        pdf.drawString(x + sum(cell_widths[:i]) + 5, y - cell_height + 5, header)
+    y -= cell_height
+
+    # Draw Table Rows
+    pdf.setFont("Helvetica", 10)
+    for i in range(num_rows):
+        row = rows[i] if i < len(rows) else [""] * len(headers)
+        for j, cell in enumerate(row):
+            pdf.rect(x + sum(cell_widths[:j]), y - cell_height, cell_widths[j], cell_height)
+            pdf.drawString(x + sum(cell_widths[:j]) + 5, y - cell_height + 5, str(cell))
+        y -= cell_height
+
+    return y
+
+# Helper Function: Draw Combined Section for Convenors and Volunteers
+def draw_combined_section(pdf, x, y, title, headers, convenors, volunteers):
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(x, y, title)
+    y -= 25  # Add space below title
+
+    pdf.setFont("Helvetica-Bold", 10)
+    cell_widths = [150, 100, 100]
+    cell_height = 20  # Row height adjustment
+
+    # Header row
+    for i, header in enumerate(headers):
+        pdf.rect(x + sum(cell_widths[:i]), y - cell_height, cell_widths[i], cell_height)
+        pdf.drawString(x + sum(cell_widths[:i]) + 5, y - cell_height + 5, header)
+    y -= cell_height
+
+    # Draw Convenors
+    pdf.setFont("Helvetica-Bold", 10)
+    pdf.drawString(x, y, "CONVENORS")
+    y -= cell_height
+
+    for convenor in convenors:
+        row = [convenor.get("name", "N/A"), convenor.get("roll_number", "N/A"), convenor.get("mobile", "N/A")]
+        for i, cell in enumerate(row):
+            pdf.rect(x + sum(cell_widths[:i]), y - cell_height, cell_widths[i], cell_height)
+            pdf.drawString(x + sum(cell_widths[:i]) + 5, y - cell_height + 5, str(cell))
+        y -= cell_height
+
+    # Draw Volunteers
+    pdf.setFont("Helvetica-Bold", 10)
+    pdf.drawString(x, y, "VOLUNTEERS")
+    y -= cell_height
+
+    for volunteer in volunteers:
+        row = [volunteer.get("name", "N/A"), volunteer.get("roll_number", "N/A"), volunteer.get("mobile", "N/A")]
+        for i, cell in enumerate(row):
+            pdf.rect(x + sum(cell_widths[:i]), y - cell_height, cell_widths[i], cell_height)
+            pdf.drawString(x + sum(cell_widths[:i]) + 5, y - cell_height + 5, str(cell))
+        y -= cell_height
+
+    return y
 
 
+
+    return redirect(url_for('event_page'))
 if __name__ == '__main__':
     app.run(debug=True)

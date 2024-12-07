@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Preview</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .table,
+        .table th,
+        .table td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        .table th {
+            background-color: #f2f2f2;
+        }
+
+        h2 {
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Event Preview: {{ event_id }}</h1>
+
+    <div class="section">
+        <h2>Secretary Details</h2>
+        <table class="table">
+            <tr>
+                <th>Name</th>
+                <th>Roll Number</th>
+                <th>Mobile No</th>
+            </tr>
+            <tr>
+                <td>{{ form_data.secretary_name }}</td>
+                <td>{{ form_data.secretary_roll_number }}</td>
+                <td>{{ form_data.secretary_mobile }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Convenor and Volunteer Details</h2>
+        <table class="table">
+            <tr>
+                <th>Name</th>
+                <th>Roll Number</th>
+                <th>Mobile No</th>
+            </tr>
+            <tr>
+                <td>{{ form_data.convenor_name }}</td>
+                <td>{{ form_data.convenor_roll_number }}</td>
+                <td>{{ form_data.convenor_mobile }}</td>
+            </tr>
+            {% for volunteer in form_data.volunteers %}
+            <tr>
+                <td>{{ volunteer.name }}</td>
+                <td>{{ volunteer.roll_number }}</td>
+                <td>{{ volunteer.mobile }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Faculty Advisor Details</h2>
+        <table class="table">
+            <tr>
+                <th>Name</th>
+                <th>Designation</th>
+                <th>Contact Details</th>
+            </tr>
+            <tr>
+                <td>{{ form_data.advisor_name }}</td>
+                <td>{{ form_data.advisor_department }}</td>
+                <td>{{ form_data.advisor_contact }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Judge Details</h2>
+        <table class="table">
+            <tr>
+                <th>Name</th>
+                <th>Designation</th>
+                <th>Contact Details</th>
+            </tr>
+            <tr>
+                <td>{{ form_data.judge_name }}</td>
+                <td>{{ form_data.judge_designation }}</td>
+                <td>{{ form_data.judge_contact }}</td>
+            </tr>
+        </table>
+    </div>
+
+
+
+</body>
+
+</html>

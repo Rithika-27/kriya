@@ -6,13 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Preview Page</title>
     <script>
-        // Function to load the event data from localStorage and display it
+        // Function to load the event data and items data from localStorage and display them
         function loadPreviewData() {
-            // Retrieve event details and event data from localStorage
+            // Retrieve event details, event data, and items data from localStorage
             const eventDetails = JSON.parse(localStorage.getItem('eventDetails'));
             const eventData = JSON.parse(localStorage.getItem('eventData'));
+            const itemsData = JSON.parse(localStorage.getItem('items'));
+            const eventInfo = JSON.parse(localStorage.getItem('eventInfo'));
 
-            // Check and display event details
+            // Display event details
             if (eventDetails) {
                 const eventDetailsContainer = document.getElementById('eventDetails');
                 eventDetailsContainer.innerHTML = `
@@ -23,7 +25,7 @@
                 document.getElementById('eventDetails').innerHTML = '<p>No event details found.</p>';
             }
 
-            // Check and display event data
+            // Display event data
             if (eventData) {
                 const eventDataContainer = document.getElementById('eventData');
                 eventDataContainer.innerHTML = `
@@ -33,37 +35,87 @@
             } else {
                 document.getElementById('eventData').innerHTML = '<p>No event data found.</p>';
             }
+
+            // Display items data
+            if (itemsData && Array.isArray(itemsData)) {
+                const itemsContainer = document.getElementById('itemsData');
+                const itemsTableRows = itemsData.map((item, index) => `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${item.item_name}</td>
+                        <td>${item.quantity}</td>
+                        <td>${item.price_per_unit}</td>
+                        <td>${item.total_price}</td>
+                    </tr>
+                `).join('');
+
+                itemsContainer.innerHTML = `
+                    <h2>Items Required:</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>S.NO.</th>
+                                <th>Item Name</th>
+                                <th>Quantity</th>
+                                <th>Price per Unit</th>
+                                <th>Total Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsTableRows}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                document.getElementById('itemsData').innerHTML = '<p>No items data found.</p>';
+            }
+            if (eventInfo) {
+                const eventFormDataContainer = document.getElementById('eventInfo');
+                let formDataHTML = `
+                    <h2>Event Form Data:</h2>
+                    <pre>${JSON.stringify(eventInfo, null, 2)}</pre>
+                `;
+                eventFormDataContainer.innerHTML = formDataHTML;
+            } else {
+                document.getElementById('eventInfo').innerHTML = '<p>No form data found.</p>';
+            }
+
         }
 
         // Call the function to load the preview data when the page loads
         window.onload = loadPreviewData;
 
-        // Function to submit the event data to the backend
+        // Function to submit the event data and items to the backend
         function submitEventData() {
             const eventDetails = JSON.parse(localStorage.getItem('eventDetails'));
             const eventData = JSON.parse(localStorage.getItem('eventData'));
+            const items = JSON.parse(localStorage.getItem('items'));
+            const eventInfo = JSON.parse(localStorage.getItem('eventInfo'));
 
-            if (eventDetails && eventData) {
-                // Merge eventDetails and eventData into a single object
-                const allEventData = { eventDetails, eventData };
+            console.log("Submitting items:", items); // Debugging
 
-                // Simulate submitting the data
+            if (eventDetails && eventData && items && eventInfo) {
+                const allEventData = { eventDetails, eventData, items, eventInfo }; // Include items
+
                 fetch('/submit_event', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(allEventData),
+                    body: JSON.stringify(allEventData), // Include items here
                 })
                     .then(response => response.json())
                     .then(data => {
-                        // Navigate to confirmation page on success
-                        window.location.href = './confirm';
+                        if (data.status === "success") {
+                            window.location.href = './confirm';
+                        } else {
+                            alert('Failed to submit event data.');
+                        }
                     })
                     .catch(error => {
                         console.error('Error submitting event data:', error);
-                        alert('Failed to submit event data.');
+                        alert('Error submitting event data.');
                     });
             } else {
-                alert('No event data to submit.');
+                alert('Event data is incomplete.');
             }
         }
     </script>
@@ -82,6 +134,16 @@
         <!-- Event Data Section -->
         <div id="eventData">
             <h2>Event Data:</h2>
+            <!-- Populated dynamically -->
+        </div>
+
+        <!-- Items Data Section -->
+        <div id="itemsData">
+            <h2>Items Required:</h2>
+            <!-- Populated dynamically -->
+        </div>
+        <div id="eventInfo">
+            <h2>event Info:</h2>
             <!-- Populated dynamically -->
         </div>
 
